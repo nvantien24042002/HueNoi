@@ -28,13 +28,19 @@ Bật RLS trên bảng ứng dụng. Cấp quyền theo bảng, cột và hàm c
 
 | Vai trò | SELECT | INSERT | UPDATE | DELETE | EXECUTE |
 |---|---|---|---|---|---|
-| anon | Không | Không | Không | Không | Không có RPC nghiệp vụ |
+| anon | Chỉ cột công khai của hai bảng danh mục theo invariant công bố | Không | Không | Không | Không có RPC nghiệp vụ |
 | authenticated | Cột công khai của danh mục và nguồn published, đề và lựa chọn thuộc quiz published, lượt làm và câu trả lời của chính mình kể cả sau thu hồi quiz | Không | Không | Không | RPC nộp quiz |
 | Nội bộ biên tập | Nguồn, entry, chunk và dữ liệu soạn quiz | Cùng nhóm bảng | Cùng nhóm bảng, giữ đề và đáp án đã công bố bất biến | Không, dùng trạng thái thu hồi | Không có RPC nghiệp vụ |
 | Nội bộ Tutor | Đọc chunk và cột nguồn cần thiết qua policy published | Chỉ trạng thái hạn mức và đặt chỗ chi phí | Chỉ trạng thái hạn mức và đặt chỗ chi phí | Chỉ bản ghi vận hành hết hạn theo lịch bảo trì | Không có RPC quiz |
 | Chủ RPC chấm điểm | Quiz, câu hỏi, lựa chọn, đáp án và kết quả cần cho chấm hoặc phát lại | quiz_attempts và quiz_attempt_answers | Không | Không | Chỉ các hàm phụ trợ cần thiết |
 
 Vai trò nội bộ dùng thông tin xác thực riêng phía máy chủ, không dùng service_role trong request path. Tách vai trò chủ RPC thành NOLOGIN, không là chủ bảng, không có BYPASSRLS, không cấp membership cho client. Policy riêng cho chủ RPC chỉ cho phép quyền trong bảng trên, giới hạn kết quả đọc và ghi theo auth.uid() và quyền đọc đáp án theo nhu cầu chấm hoặc phát lại. Xóa tài khoản dùng cascade do FK, gồm lượt làm, đáp án đã chọn và bộ đếm cá nhân.
+
+### Danh mục M1-04 trên local
+
+Data API cho anon và authenticated đọc cột công khai của nguồn (id, title, locator, status) và các cột entry qua RLS. Quyền này không thay đổi yêu cầu đăng nhập ở các API Next.js. Nguồn duy nhất theo (title, locator), với giới hạn byte cho khóa ghép. reviewed_by tham chiếu auth.users và giữ dấu vết duyệt bằng FK restrict. Nguồn published cần quyền sử dụng, người duyệt và thời điểm duyệt.
+
+Role hue_catalog_editor là role nhóm NOLOGIN, không có BYPASSRLS. Cấp membership rõ ràng cho login PostgreSQL riêng của công cụ nội bộ. Không cấp cho anon, authenticated hay authenticator. Metadata do người dùng gửi không tham gia cấp quyền. Role này có SELECT, INSERT, UPDATE trên hai bảng và dùng trạng thái withdrawn thay cho DELETE. Migration không tạo login hoặc thông tin xác thực, view hay RPC.
 
 ## RPC chấm quiz và xử lý đồng thời
 

@@ -37,3 +37,23 @@ Mailpit và kiểm tra `Set-Cookie` trên redirect PKCE lẫn phản hồi refre
 Bài test chỉnh thời điểm hết hạn trong cookie thử để buộc SDK gọi refresh
 thật, rồi dùng cookie response ở request kế tiếp. Bộ `npm test` độc lập với
 Supabase. Cảnh báo giải mã cookie ở ca HTTP cố tình gửi dữ liệu hỏng là dự kiến.
+
+## Kiểm thử schema và RLS danh mục local
+
+1. Trong checkout này, kiểm tra Supabase local đang chạy rồi dùng
+   `npx supabase migration up --local` và `npx supabase migration list --local`.
+2. Nạp `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` và publishable key
+   local vào shell. Chạy `node --test test/catalog-local.mjs` trong WSL.
+3. Bài test cần Docker local với container DB `supabase_db_HueNoi-git` và
+   cấu hình Auth local cho phép đăng ký fixture không cần xác nhận email.
+   Fixture giả lập có nhãn riêng, dùng hai JWT thật từ Supabase Auth và một
+   login PostgreSQL tạm có membership biên tập. Bài test dọn dữ liệu và login
+   tạm khi kết thúc. Kết nối quản trị chỉ phục vụ cấp/dọn fixture và kiểm kê
+   schema. Không dùng service-role key.
+
+Sau mỗi yêu cầu ghi từ anon hoặc một trong hai JWT, test dùng kết nối editor
+riêng để so sánh toàn bộ fixture trước và sau. Cả hai biến thể UPDATE có và
+không có `.select()` phải trả lỗi quyền `42501`. Test cũng kiểm tra quyền
+hiệu lực của các role API, gồm kế thừa và khả năng chuyển sang role editor.
+GraphQL đang tắt trên stack local. Bài test chỉ xác nhận endpoint không trả dữ
+liệu khi tắt, chưa đánh giá RLS qua GraphQL khi bật.
