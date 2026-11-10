@@ -12,12 +12,15 @@ Một ứng dụng Next.js App Router trên Vercel chứa giao diện, Route Han
 
 Route Handlers xác thực và kiểm tra dữ liệu bằng Zod rồi gọi dịch vụ nghiệp vụ. Các truy vấn đọc theo người dùng chạy bằng phiên Supabase. Hàm chấm điểm có quyền tối thiểu và tự lấy danh tính từ phiên. Secret chỉ có ở máy chủ hoặc môi trường chạy nhập liệu. PWA cache tài nguyên tĩnh và màn hình offline, bỏ qua cache cho API, phiên và trang cá nhân.
 
+Server Components chỉ có thể đọc cookie và hiện không khởi tạo Auth client. Trang tài khoản lấy danh tính qua API phiên. Server Actions ghi cookie qua API của Next.js. Route Handlers đọc cookie từ request và gắn các cập nhật Supabase vào response trước khi trả, gồm cả redirect PKCE và phản hồi refresh. Các phản hồi Auth này dùng private, no-store.
+
 ## API nội bộ phiên bản 1
 
 Các đường dẫn dưới đây bắt đầu bằng /api/v1 và yêu cầu phiên hợp lệ. Đăng nhập và callback dùng Supabase Auth. Phản hồi JSON thành công bọc trong { data }, lỗi trong { error: { code, message } }. Danh sách dùng cursor mờ, limit mặc định 20 và tối đa 50. Trả 400 khi sai schema hoặc cursor, 401 khi hết phiên, 404 cho tài nguyên không tồn tại hoặc chưa xuất bản, 409 khi khóa nộp bài bị tái sử dụng với nội dung khác, 429 khi vượt hạn mức và 503 khi phụ thuộc tạm thời lỗi. Trả Retry-After nếu biết thời gian chờ.
 
 | Method và route | Đầu vào và dữ liệu trả về |
 |---|---|
+| GET /session | Xác thực cookie qua Supabase Auth phía server. Trả id và email của người dùng hiện tại, 401 nếu thiếu hoặc sai phiên, 503 nếu Auth chưa cấu hình hoặc tạm thời gián đoạn. Phản hồi private, no-store. |
 | GET /vocabulary, GET /sentences | Query cursor, limit. Trả items gồm id, text, meaning và nextCursor. |
 | GET /vocabulary/{id}, GET /sentences/{id} | Trả id, text, meaning, context, example, sourceTitle và sourceLocator. Các trường bổ sung thiếu được trả null. |
 | GET /quizzes | Query cursor, limit. Trả items gồm id, title và nextCursor. |
