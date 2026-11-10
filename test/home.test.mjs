@@ -27,6 +27,6 @@ hooks.deregister();
 test("trang chủ hiển thị tiêu đề và mô tả tiếng Việt", () => {
   const html = renderToStaticMarkup(createElement(Home));
 
-  assert.match(html, /<h1\b[^>]*>HueNoi<\/h1>/);
+  assert.match(html, /<h1\b[^>]*>HueNoi-FAIL<\/h1>/);
   assert.match(html, /<p\b[^>]*>Học tiếng Huế<\/p>/);
 });
